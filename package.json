@@ -1,0 +1,24 @@
+{
+    "name": "eslint-benchmark-suite",
+    "version": "1.0.0",
+    "description": "Reproducible benchmarks for ESLint plugins",
+    "type": "module",
+    "scripts": {
+        "benchmark:import": "node scripts/run-benchmark.js import",
+        "benchmark:security": "node scripts/run-benchmark.js security",
+        "benchmark:all": "node scripts/run-benchmark.js --all",
+        "generate:import": "node scripts/generate-fixtures.js import",
+        "generate:security": "node scripts/generate-fixtures.js security",
+        "generate:all": "node scripts/generate-fixtures.js --all"
+    },
+    "devDependencies": {
+        "eslint": "^9.17.0"
+    },
+    "keywords": [
+        "eslint",
+        "benchmark",
+        "performance"
+    ],
+    "author": "Ofri Peretz",
+    "license": "MIT"
+}
