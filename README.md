@@ -13,7 +13,7 @@
 
 ## 📈 Latest Results (January 2, 2026)
 
-### Import Plugin Benchmark
+### Benchmark 1: Core Rules (9 rules)
 
 | Files  | eslint-plugin-import | eslint-plugin-import-next | Speedup  |
 | ------ | -------------------- | ------------------------- | -------- |
@@ -21,7 +21,23 @@
 | 5,000  | 19.04s (±0.24s)      | 5.76s (±0.12s)            | **3.3x** |
 | 10,000 | 58.67s (±0.61s)      | 11.26s (±0.80s)           | **5.2x** |
 
-_Environment: Node v20.19.5, Apple Silicon M1 (arm64), 5 iterations_
+### Benchmark 2: Recommended Preset
+
+| Files  | eslint-plugin-import | eslint-plugin-import-next | Speedup  |
+| ------ | -------------------- | ------------------------- | -------- |
+| 1,000  | 2.42s (±0.11s)       | 1.78s (±0.05s)            | **1.4x** |
+| 5,000  | 18.43s (±0.28s)      | 6.07s (±0.28s)            | **3.0x** |
+| 10,000 | 57.74s (±0.82s)      | 10.57s (±0.12s)           | **5.5x** |
+
+### Benchmark 3: no-cycle Rule Only 🔥
+
+| Files  | eslint-plugin-import   | eslint-plugin-import-next | Speedup   |
+| ------ | ---------------------- | ------------------------- | --------- |
+| 1,000  | 27.03s (±1.59s)        | 1.05s (±0.01s)            | **25.7x** |
+| 5,000  | 148.59s (±31.13s)      | 2.71s (±0.01s)            | **54.9x** |
+| 10,000 | _(would take 10+ min)_ | ~5s (projected)           | **100x+** |
+
+_Environment: Node v20.19.5, Apple Silicon M1 (arm64), 3-5 iterations_
 
 ## 🚀 Quick Start
 
