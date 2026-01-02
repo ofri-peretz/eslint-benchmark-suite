@@ -15,16 +15,40 @@ const RESULTS_DIR = path.join(ROOT_DIR, 'results');
 
 // Benchmark configurations
 const BENCHMARKS = {
+  // Core rules comparison (9 rules)
   import: {
-    name: 'Import Plugin Benchmark',
+    name: 'Import Plugin - Core Rules (9 rules)',
+    baseDir: 'import', // Directory for fixtures/configs
     plugins: [
       { name: 'eslint-plugin-import', config: 'import.config.js' },
       { name: 'eslint-plugin-import-next', config: 'import-next.config.js' },
     ],
     fixtureSizes: [1000, 5000, 10000],
   },
+  // Recommended preset comparison
+  'import-recommended': {
+    name: 'Import Plugin - Recommended Preset',
+    baseDir: 'import', // Share fixtures with core import benchmark
+    plugins: [
+      { name: 'eslint-plugin-import', config: 'import-recommended.config.js' },
+      { name: 'eslint-plugin-import-next', config: 'import-next-recommended.config.js' },
+    ],
+    fixtureSizes: [1000, 5000, 10000],
+  },
+  // No-cycle only (the expensive rule)
+  'import-no-cycle': {
+    name: 'Import Plugin - no-cycle Rule Only',
+    baseDir: 'import', // Share fixtures with core import benchmark
+    plugins: [
+      { name: 'eslint-plugin-import', config: 'import-no-cycle.config.js' },
+      { name: 'eslint-plugin-import-next', config: 'import-next-no-cycle.config.js' },
+    ],
+    fixtureSizes: [1000, 5000, 10000],
+  },
+  // Security plugin comparison
   security: {
     name: 'Security Plugin Benchmark',
+    baseDir: 'security',
     plugins: [
       { name: 'eslint-plugin-security', config: 'security.config.js' },
       { name: 'eslint-plugin-secure-coding', config: 'secure-coding.config.js' },
@@ -64,7 +88,7 @@ async function main() {
       continue;
     }
 
-    const benchmarkDir = path.join(BENCHMARKS_DIR, name);
+    const benchmarkDir = path.join(BENCHMARKS_DIR, config.baseDir || name);
     const resultsDir = path.join(RESULTS_DIR, name);
 
     // Ensure results directory exists
