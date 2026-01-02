@@ -12,7 +12,9 @@
         "generate:all": "node scripts/generate-fixtures.js --all"
     },
     "devDependencies": {
-        "eslint": "^9.17.0"
+        "eslint": "^9.17.0",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-import-next": "^2.1.0"
     },
     "keywords": [
         "eslint",

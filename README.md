@@ -11,7 +11,17 @@
 | [crypto](./benchmarks/crypto/)     | Cryptography rules comparison                             | 🔜 Planned |
 | [jwt](./benchmarks/jwt/)           | JWT security rules                                        | 🔜 Planned |
 
----
+## 📈 Latest Results (January 2, 2026)
+
+### Import Plugin Benchmark
+
+| Files  | eslint-plugin-import | eslint-plugin-import-next | Speedup  |
+| ------ | -------------------- | ------------------------- | -------- |
+| 1,000  | 2.80s (±0.20s)       | 1.78s (±0.01s)            | **1.6x** |
+| 5,000  | 19.04s (±0.24s)      | 5.76s (±0.12s)            | **3.3x** |
+| 10,000 | 58.67s (±0.61s)      | 11.26s (±0.80s)           | **5.2x** |
+
+_Environment: Node v20.19.5, Apple Silicon M1 (arm64), 5 iterations_
 
 ## 🚀 Quick Start
 
