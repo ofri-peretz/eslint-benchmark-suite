@@ -7,6 +7,7 @@
         "benchmark:import": "node scripts/run-benchmark.js import",
         "benchmark:security": "node scripts/run-benchmark.js security",
         "benchmark:ai-security": "node benchmarks/ai-security/run.js",
+        "benchmark:fn-fp": "node benchmarks/fn-fp-comparison/run.js",
         "benchmark:all": "node scripts/run-benchmark.js --all",
         "generate:import": "node scripts/generate-fixtures.js import",
         "generate:security": "node scripts/generate-fixtures.js security",
@@ -19,12 +20,14 @@
         "eslint-plugin-secure-coding": "latest",
         "eslint-plugin-pg": "latest",
         "eslint-plugin-node-security": "latest",
-        "eslint-plugin-jwt": "latest"
+        "eslint-plugin-jwt": "latest",
+        "eslint-plugin-security": "^2.1.0"
     },
     "keywords": [
         "eslint",
         "benchmark",
-        "performance"
+        "performance",
+        "security"
     ],
     "author": "Ofri Peretz",
     "license": "MIT"
