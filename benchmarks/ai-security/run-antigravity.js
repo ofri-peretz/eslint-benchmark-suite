@@ -35,11 +35,14 @@ import { PROMPTS, RULE_METADATA, RULE_CATEGORY_MAP } from "./prompts.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_DIR = path.join(__dirname, "../../results/ai-security");
 const GENERATED_DIR = path.join(__dirname, "generated-antigravity");
+const CHECKPOINT_DIR = path.join(RESULTS_DIR, "checkpoints");
 
 // Ensure directories exist
 if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
 if (!fs.existsSync(GENERATED_DIR))
   fs.mkdirSync(GENERATED_DIR, { recursive: true });
+if (!fs.existsSync(CHECKPOINT_DIR))
+  fs.mkdirSync(CHECKPOINT_DIR, { recursive: true });
 
 // ═══════════════════════════════════════════════════════════════
 // MODEL REGISTRY
@@ -99,6 +102,24 @@ const MODEL_REGISTRY = {
     displayName: "Gemini 2.5 Flash",
     tier: "balanced",
     color: "\x1b[94m", // light blue
+  },
+
+  // ── Gemini models (via Gemini CLI — true zero-context) ──
+  "gemini-2.5-flash-cli": {
+    id: "gemini-2.5-flash-cli",
+    provider: "gemini-cli",
+    cliModel: "gemini-2.5-flash",
+    displayName: "Gemini 2.5 Flash (CLI)",
+    tier: "balanced",
+    color: "\x1b[96m", // bright cyan
+  },
+  "gemini-2.5-pro-cli": {
+    id: "gemini-2.5-pro-cli",
+    provider: "gemini-cli",
+    cliModel: "gemini-2.5-pro",
+    displayName: "Gemini 2.5 Pro (CLI)",
+    tier: "flagship",
+    color: "\x1b[92m", // bright green
   },
 };
 
@@ -335,6 +356,88 @@ Please fix ALL the security issues and provide only the corrected JavaScript cod
   return extractCode(text);
 }
 
+/**
+ * Generate code using Gemini CLI in non-interactive mode.
+ * Achieves zero-context isolation by running from an empty temp directory,
+ * preventing Gemini from scanning project files.
+ */
+async function generateWithGeminiCLI(prompt, modelConfig) {
+  const { spawnSync } = await import("child_process");
+  const os = await import("os");
+
+  const fullPrompt = `${prompt}\n\nProvide only the JavaScript code, no explanations.`;
+
+  // Create an empty temp directory for zero-context isolation
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gemini-bench-"));
+
+  try {
+    const result = spawnSync(
+      "gemini",
+      ["-p", fullPrompt, "-m", modelConfig.cliModel],
+      {
+        encoding: "utf-8",
+        maxBuffer: 10 * 1024 * 1024,
+        timeout: 180000,
+        cwd: tempDir, // Run from empty dir = zero context
+      },
+    );
+
+    if (result.error) throw result.error;
+    if (result.status !== 0)
+      throw new Error(result.stderr || "Gemini CLI failed");
+
+    return extractCode(result.stdout);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Remediate code using Gemini CLI
+ */
+async function remediateWithGeminiCLI(originalCode, violations, modelConfig) {
+  const { spawnSync } = await import("child_process");
+  const os = await import("os");
+
+  const errorList = violations
+    .map((v) => `Line ${v.line}: ${v.ruleId} - ${v.message.split("\n")[0]}`)
+    .join("\n");
+
+  const remediationPrompt = `The following JavaScript code has security vulnerabilities detected by ESLint:
+
+\`\`\`javascript
+${originalCode}
+\`\`\`
+
+ESLint found these issues:
+${errorList}
+
+Please fix ALL the security issues and provide only the corrected JavaScript code, no explanations.`;
+
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gemini-bench-"));
+
+  try {
+    const result = spawnSync(
+      "gemini",
+      ["-p", remediationPrompt, "-m", modelConfig.cliModel],
+      {
+        encoding: "utf-8",
+        maxBuffer: 10 * 1024 * 1024,
+        timeout: 180000,
+        cwd: tempDir,
+      },
+    );
+
+    if (result.error) throw result.error;
+    if (result.status !== 0)
+      throw new Error(result.stderr || "Gemini CLI remediation failed");
+
+    return extractCode(result.stdout);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // UNIFIED DISPATCH
 // ═══════════════════════════════════════════════════════════════
@@ -348,6 +451,8 @@ async function generateCode(prompt, modelConfig, options = {}) {
       return generateWithClaude(prompt, modelConfig, options);
     case "google":
       return generateWithGemini(prompt, modelConfig, options);
+    case "gemini-cli":
+      return generateWithGeminiCLI(prompt, modelConfig);
     default:
       throw new Error(`Unknown provider: ${modelConfig.provider}`);
   }
@@ -362,6 +467,8 @@ async function remediateCode(originalCode, violations, modelConfig) {
       return remediateWithClaude(originalCode, violations, modelConfig);
     case "google":
       return remediateWithGemini(originalCode, violations, modelConfig);
+    case "gemini-cli":
+      return remediateWithGeminiCLI(originalCode, violations, modelConfig);
     default:
       throw new Error(`Unknown provider: ${modelConfig.provider}`);
   }
@@ -528,6 +635,8 @@ async function runBenchmark(config) {
     outputPrefix,
     concurrency = {},
     rateLimit = {},
+    resume = false,
+    resumeModels = {},
   } = config;
 
   console.log("\n" + "═".repeat(60));
@@ -849,7 +958,11 @@ async function runBenchmark(config) {
           }
 
           // Rate limiting (configurable per provider)
-          const defaultDelay = modelConfig.provider === "google" ? 1000 : 500;
+          const defaultDelay =
+            modelConfig.provider === "google" ||
+            modelConfig.provider === "gemini-cli"
+              ? 1000
+              : 500;
           const delay = rateLimit[modelConfig.provider] || defaultDelay;
           await new Promise((r) => setTimeout(r, delay));
         }
@@ -937,10 +1050,65 @@ async function runBenchmark(config) {
     return { modelId, modelResults, log: logLines.join("\n"), skipped: false };
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // CHECKPOINT HELPERS
+  // ═══════════════════════════════════════════════════════════════
+
+  const conditionTag = config.securityContext ? "control" : "treatment";
+
+  function getCheckpointPath(modelId) {
+    const safeId = modelId.replace(/[^a-zA-Z0-9.-]/g, "_");
+    return path.join(
+      CHECKPOINT_DIR,
+      `checkpoint-${safeId}-${conditionTag}-${iterationsPerPrompt}iter.json`,
+    );
+  }
+
+  function saveCheckpoint(modelId, modelResults) {
+    const cpPath = getCheckpointPath(modelId);
+    const checkpoint = {
+      modelId,
+      timestamp: new Date().toISOString(),
+      config: {
+        iterationsPerPrompt,
+        categories,
+        enableRemediation,
+        securityContext,
+      },
+      results: modelResults,
+    };
+    fs.writeFileSync(cpPath, JSON.stringify(checkpoint, null, 2));
+    console.log(
+      `  ${DIM}💾 Checkpoint saved: ${path.basename(cpPath)}${RESET}`,
+    );
+  }
+
+  function loadCheckpoint(modelId) {
+    const cpPath = getCheckpointPath(modelId);
+    if (!fs.existsSync(cpPath)) return null;
+    try {
+      const data = JSON.parse(fs.readFileSync(cpPath, "utf-8"));
+      // Verify the checkpoint matches current config
+      if (
+        data.config?.iterationsPerPrompt === iterationsPerPrompt &&
+        data.config?.securityContext === securityContext
+      ) {
+        return data.results;
+      }
+      console.log(
+        `  ${DIM}⚠️  Checkpoint config mismatch for ${modelId}, re-running${RESET}`,
+      );
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Run a list of models with bounded concurrency.
    * When only 1 model runs at a time, output streams live to the console.
    * When multiple models run concurrently, output is buffered to avoid interleaving.
+   * Saves a checkpoint after each model completes.
    * @param {string[]} modelIds - Models to run
    * @param {number} maxConcurrency - Max models to run in parallel (1 = sequential)
    */
@@ -954,53 +1122,86 @@ async function runBenchmark(config) {
       const chunkResults = await Promise.all(
         chunk.map((modelId) => runSingleModel(modelId, { streamOutput })),
       );
+
+      // Save checkpoint for each completed model
+      for (const outcome of chunkResults) {
+        if (!outcome.skipped && outcome.modelResults) {
+          saveCheckpoint(outcome.modelId, outcome.modelResults);
+        }
+      }
+
       outcomes.push(...chunkResults);
     }
     return outcomes;
   }
 
+  // ── Load resumed models first ──
+  if (resume) {
+    const resumedCount = Object.keys(resumeModels).length;
+    if (resumedCount > 0) {
+      console.log(
+        `\n  ${BOLD}♻️  Resumed ${resumedCount} model(s) from checkpoints${RESET}`,
+      );
+      for (const [modelId, modelResults] of Object.entries(resumeModels)) {
+        results.models[modelId] = modelResults;
+        const config = MODEL_REGISTRY[modelId];
+        console.log(
+          `     ${config?.color || ""}✅ ${config?.displayName || modelId}${RESET} — ${modelResults.vulnerabilityRate} vuln rate (${modelResults.totalFunctions} functions)`,
+        );
+      }
+    }
+  }
+
   // ── Group models by provider and run providers in parallel ──
   const providerGroups = {};
   for (const modelId of models) {
+    // Skip models already resumed
+    if (resumeModels[modelId]) continue;
     const provider = MODEL_REGISTRY[modelId]?.provider || "unknown";
     if (!providerGroups[provider]) providerGroups[provider] = [];
     providerGroups[provider].push(modelId);
   }
 
   const providerNames = Object.keys(providerGroups);
-  const concurrencyDisplay = providerNames
-    .map((p) => {
-      const c = concurrency[p] || 1;
-      return `${p} (${providerGroups[p].length} models, concurrency=${c})`;
-    })
-    .join(" | ");
-  console.log(
-    `  Parallelism: ${providerNames.length} provider pipeline(s): ${concurrencyDisplay}`,
-  );
 
-  // Run each provider group in parallel, with per-provider concurrency limits
-  const groupPromises = providerNames.map((provider) =>
-    runModelsWithConcurrency(
-      providerGroups[provider],
-      concurrency[provider] || 1,
-    ),
-  );
+  if (providerNames.length === 0) {
+    console.log(`\n  ✅ All models already completed (from checkpoints).`);
+  } else {
+    const concurrencyDisplay = providerNames
+      .map((p) => {
+        const c = concurrency[p] || 1;
+        return `${p} (${providerGroups[p].length} models, concurrency=${c})`;
+      })
+      .join(" | ");
+    console.log(
+      `  Parallelism: ${providerNames.length} provider pipeline(s): ${concurrencyDisplay}`,
+    );
 
-  const groupResults = await Promise.all(groupPromises);
+    // Run each provider group in parallel, with per-provider concurrency limits
+    const groupPromises = providerNames.map((provider) =>
+      runModelsWithConcurrency(
+        providerGroups[provider],
+        concurrency[provider] || 1,
+      ),
+    );
 
-  // Flatten and merge results in registry order (stable output order)
-  const allOutcomes = groupResults.flat();
-  const outcomeMap = new Map(allOutcomes.map((o) => [o.modelId, o]));
+    const groupResults = await Promise.all(groupPromises);
 
-  for (const modelId of models) {
-    const outcome = outcomeMap.get(modelId);
-    if (!outcome) continue;
+    // Flatten and merge results in registry order (stable output order)
+    const allOutcomes = groupResults.flat();
+    const outcomeMap = new Map(allOutcomes.map((o) => [o.modelId, o]));
 
-    // Flush buffered log for this model
-    console.log(outcome.log);
+    for (const modelId of models) {
+      if (resumeModels[modelId]) continue; // Already merged above
+      const outcome = outcomeMap.get(modelId);
+      if (!outcome) continue;
 
-    if (!outcome.skipped) {
-      results.models[modelId] = outcome.modelResults;
+      // Flush buffered log for this model
+      console.log(outcome.log);
+
+      if (!outcome.skipped) {
+        results.models[modelId] = outcome.modelResults;
+      }
     }
   }
 
@@ -1268,7 +1469,11 @@ async function main() {
             ? "⚖️"
             : "⚡";
       const providerTag =
-        config.provider === "anthropic" ? "Claude CLI" : "Gemini API";
+        config.provider === "anthropic"
+          ? "Claude CLI"
+          : config.provider === "gemini-cli"
+            ? "Gemini CLI"
+            : "Gemini API";
       console.log(
         `  ${config.color}${id.padEnd(20)}${RESET} ${config.displayName.padEnd(22)} ${tierBadge}  ${DIM}(${providerTag})${RESET}`,
       );
@@ -1292,6 +1497,7 @@ async function main() {
   const compareMode = args.includes("--compare");
   const noRemediation = args.includes("--no-remediation");
   const securityContext = args.includes("--security-context");
+  const resumeMode = args.includes("--resume");
   const outputPrefix = args
     .find((a) => a.startsWith("--output-prefix="))
     ?.split("=")[1];
@@ -1334,6 +1540,8 @@ async function main() {
         pro: "gemini-3-pro",
         "gemini-flash": "gemini-3-flash",
         "gemini-pro": "gemini-3-pro",
+        "gemini-flash-cli": "gemini-2.5-flash-cli",
+        "gemini-pro-cli": "gemini-2.5-pro-cli",
       };
       return aliases[trimmed] || trimmed;
     });
@@ -1356,6 +1564,45 @@ async function main() {
     ? categoriesArg.split(",")
     : Object.keys(PROMPTS);
 
+  // ── Resume: load checkpoints for completed models ──
+  const resumeModels = {};
+  if (resumeMode) {
+    console.log(`\n${BOLD}♻️  Resume Mode — scanning checkpoints...${RESET}`);
+    const conditionTag = securityContext ? "control" : "treatment";
+    for (const modelId of selectedModels) {
+      const safeId = modelId.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const cpPath = path.join(
+        CHECKPOINT_DIR,
+        `checkpoint-${safeId}-${conditionTag}-${iterationsArg}iter.json`,
+      );
+      if (fs.existsSync(cpPath)) {
+        try {
+          const data = JSON.parse(fs.readFileSync(cpPath, "utf-8"));
+          if (
+            data.config?.iterationsPerPrompt === iterationsArg &&
+            data.config?.securityContext === securityContext
+          ) {
+            resumeModels[modelId] = data.results;
+            const display = MODEL_REGISTRY[modelId]?.displayName || modelId;
+            console.log(
+              `   ✅ ${display} — loaded from checkpoint (${data.results.totalFunctions} functions, ${data.results.vulnerabilityRate})`,
+            );
+          }
+        } catch {
+          // Corrupted checkpoint, will re-run
+        }
+      }
+    }
+    const remaining = selectedModels.filter((m) => !resumeModels[m]);
+    if (remaining.length === 0) {
+      console.log(`   All models already completed!`);
+    } else {
+      console.log(
+        `   🔄 Will run: ${remaining.map((m) => MODEL_REGISTRY[m]?.displayName || m).join(", ")}`,
+      );
+    }
+  }
+
   const config = {
     models: selectedModels,
     iterationsPerPrompt: iterationsArg,
@@ -1363,13 +1610,17 @@ async function main() {
     enableRemediation: !noRemediation,
     securityContext,
     outputPrefix,
+    resume: resumeMode,
+    resumeModels,
     concurrency: {
       anthropic: concurrencyAnthropic,
       google: concurrencyGoogle,
+      "gemini-cli": concurrencyGoogle, // Share Google concurrency setting
     },
     rateLimit: {
       anthropic: rateLimitAnthropic,
       google: rateLimitGoogle,
+      "gemini-cli": rateLimitGoogle, // Share Google rate limit setting
     },
   };
 
