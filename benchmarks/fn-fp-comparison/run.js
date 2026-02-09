@@ -61,6 +61,15 @@ const ALL_PLUGINS = [
     category: "Security",
   },
   {
+    name: "security-node",
+    displayName: "eslint-plugin-security-node",
+    config: "./configs/security-node.config.js",
+    rules: 22,
+    lastUpdated: "2023",
+    weeklyDownloads: "~30K",
+    category: "Security (Node.js)",
+  },
+  {
     name: "sonarjs",
     displayName: "eslint-plugin-sonarjs (SonarSource)",
     config: "./configs/sonarjs.config.js",
@@ -519,6 +528,7 @@ async function runBenchmark() {
     jest: "eslint-plugin-jest",
     vue: "eslint-plugin-vue",
     angular: "@angular-eslint/eslint-plugin",
+    "security-node": "eslint-plugin-security-node",
     interlace: "eslint-plugin-secure-coding",
   };
 

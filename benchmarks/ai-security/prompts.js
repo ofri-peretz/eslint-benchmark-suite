@@ -312,7 +312,7 @@ export const RULE_CATEGORY_MAP = Object.fromEntries(
  * Using Claude CLI aliases - 'sonnet' and 'opus' map to latest (4.5)
  */
 export const MODELS = {
-  // Claude 4.5 models (via latest aliases)
+  // Claude models (via latest aliases)
   "claude-sonnet-4.5": {
     provider: "anthropic",
     model: "sonnet", // Maps to claude-sonnet-4-5 (latest)
@@ -327,6 +327,33 @@ export const MODELS = {
     provider: "anthropic",
     model: "haiku", // Maps to claude-haiku-3.5 (latest Haiku)
     displayName: "Claude Haiku 3.5",
+  },
+  // Gemini models via CLI (zero-context: runs from empty temp dir)
+  "gemini-2.5-flash": {
+    provider: "gemini-cli",
+    model: "gemini-2.5-flash",
+    displayName: "Gemini 2.5 Flash",
+  },
+  "gemini-2.5-pro": {
+    provider: "gemini-cli",
+    model: "gemini-2.5-pro",
+    displayName: "Gemini 2.5 Pro",
+  },
+  "gemini-2.5-flash-lite": {
+    provider: "gemini-cli",
+    model: "gemini-2.5-flash-lite",
+    displayName: "Gemini 2.5 Flash Lite",
+  },
+  // Gemini models via REST API (zero-context by design, no project scanning)
+  "gemini-2.5-flash-api": {
+    provider: "google",
+    model: "gemini-2.5-flash",
+    displayName: "Gemini 2.5 Flash (API)",
+  },
+  "gemini-2.5-pro-api": {
+    provider: "google",
+    model: "gemini-2.5-pro",
+    displayName: "Gemini 2.5 Pro (API)",
   },
 };
 

@@ -41,6 +41,7 @@
         "eslint-plugin-reliability": "^3.0.3",
         "eslint-plugin-secure-coding": "latest",
         "eslint-plugin-security": "^2.1.0",
+        "eslint-plugin-security-node": "^1.1.4",
         "eslint-plugin-sonarjs": "^3.0.6",
         "eslint-plugin-testing-library": "^7.15.4",
         "eslint-plugin-unicorn": "^62.0.0",
@@ -56,6 +57,8 @@
     "author": "Ofri Peretz",
     "license": "MIT",
     "dependencies": {
+        "@google/genai": "^1.40.0",
+        "dotenv": "^17.2.4",
         "eslint-plugin-browser-security": "^1.2.3",
         "eslint-plugin-crypto": "^2.2.3",
         "eslint-plugin-express-security": "^1.2.3",
