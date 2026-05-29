@@ -209,7 +209,7 @@ const ALL_PLUGINS = [
     name: "interlace",
     displayName: "Interlace ESLint Ecosystem",
     config: "./configs/interlace.config.js",
-    rules: 201, // Full security fleet: 11 plugins
+    rules: 198, // Modern security fleet: 10 plugins (crypto consolidated into node-security)
     lastUpdated: "Weekly",
     weeklyDownloads: "~5K",
     category: "Security (Full Stack)",

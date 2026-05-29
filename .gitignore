@@ -2,5 +2,10 @@
 .DS_Store
 node_modules/
 fixtures/
+# fn-fp comparison fixtures are the published benchmark corpus — keep them
+# public so `git clone && npm run benchmark:fn-fp` is reproducible verbatim.
+!benchmarks/fn-fp-comparison/fixtures/
+!benchmarks/fn-fp-comparison/fixtures/**
 results/*.json
+!results/fn-fp-comparison/golden-*.json
 !results/.gitkeep

@@ -1,6 +1,6 @@
 /**
  * ESLint Configuration for Interlace Security Ecosystem
- * Full security fleet: 11 plugins, 201 security rules
+ * Modern security fleet: 10 plugins (crypto consolidated into node-security)
  */
 
 import secureCoding from "eslint-plugin-secure-coding";
@@ -8,7 +8,6 @@ import nodeSecurity from "eslint-plugin-node-security";
 import pg from "eslint-plugin-pg";
 import jwt from "eslint-plugin-jwt";
 import browserSecurity from "eslint-plugin-browser-security";
-import crypto from "eslint-plugin-crypto";
 import mongodbSecurity from "eslint-plugin-mongodb-security";
 import expressSecurity from "eslint-plugin-express-security";
 import nestjsSecurity from "eslint-plugin-nestjs-security";
@@ -31,8 +30,6 @@ export default [
   // Browser security rules — XSS, redirects, CORS, CSP (45 rules)
   browserSecurity.configs.recommended,
 
-  // Cryptography rules — weak algorithms, insecure random (11 rules)
-  crypto.configs.recommended,
 
   // MongoDB security rules — NoSQL injection, operator injection (16 rules)
   mongodbSecurity.configs.recommended,

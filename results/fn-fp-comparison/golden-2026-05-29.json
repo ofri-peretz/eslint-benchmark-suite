@@ -1,0 +1,305 @@
+{
+  "note": "Golden reference for the SonarJS-vs-Interlace article. Interlace = modern 10-plugin fleet incl eslint-plugin-node-security>=4.2.0 (no-math-random-crypto). Reproduce: npm install && npm run benchmark:fn-fp -- --plugin=interlace  (and --plugin=sonarjs). On node-security <4.2.0 the two insecure-randomness cases are missed (38/40).",
+  "verified": {
+    "nodeVersion": "v24.12.0",
+    "eslintVersion": "9.39.2",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "plugins": {
+    "interlace": {
+      "displayName": "Interlace ESLint Ecosystem",
+      "metrics": {
+        "TP": 40,
+        "TN": 38,
+        "FP": 0,
+        "FN": 0,
+        "FNR": "0.0%",
+        "FPR": "0.0%",
+        "precision": "100.0%",
+        "recall": "100.0%",
+        "f1Score": "100.0%",
+        "detectedVulnerabilities": [
+          "vuln_sql_string_concat",
+          "vuln_sql_template_literal",
+          "vuln_sql_dynamic_column",
+          "vuln_sql_conditional",
+          "vuln_cmd_exec_concat",
+          "vuln_cmd_exec_template",
+          "vuln_cmd_execsync",
+          "vuln_cmd_spawn_shell",
+          "vuln_path_join",
+          "vuln_path_concat",
+          "vuln_path_no_validation",
+          "vuln_path_url_pathname",
+          "vuln_creds_db_password",
+          "vuln_creds_api_key",
+          "vuln_creds_aws",
+          "vuln_creds_jwt_secret",
+          "vuln_jwt_alg_none",
+          "vuln_jwt_no_algorithm",
+          "vuln_jwt_no_expiry",
+          "vuln_xss_innerhtml",
+          "vuln_xss_document_write",
+          "vuln_xss_eval",
+          "vuln_xss_new_function",
+          "vuln_proto_bracket",
+          "vuln_proto_nested",
+          "vuln_proto_assign",
+          "vuln_random_token",
+          "vuln_random_session",
+          "vuln_crypto_md5",
+          "vuln_crypto_sha1",
+          "vuln_crypto_des",
+          "vuln_timing_direct",
+          "vuln_timing_token",
+          "vuln_nosql_mongo",
+          "vuln_nosql_where",
+          "vuln_ssrf_fetch",
+          "vuln_ssrf_axios",
+          "vuln_redirect",
+          "vuln_redos_evil",
+          "vuln_redos_user"
+        ],
+        "missedVulnerabilities": [],
+        "falsePositives": []
+      },
+      "categoryBreakdown": {
+        "SQL Injection": {
+          "expected": 6,
+          "detected": 6,
+          "missed": []
+        },
+        "Command Injection": {
+          "expected": 4,
+          "detected": 4,
+          "missed": []
+        },
+        "Path Traversal": {
+          "expected": 4,
+          "detected": 4,
+          "missed": []
+        },
+        "Hardcoded Credentials": {
+          "expected": 4,
+          "detected": 4,
+          "missed": []
+        },
+        "JWT Vulnerabilities": {
+          "expected": 3,
+          "detected": 3,
+          "missed": []
+        },
+        "XSS": {
+          "expected": 4,
+          "detected": 4,
+          "missed": []
+        },
+        "Prototype Pollution": {
+          "expected": 3,
+          "detected": 3,
+          "missed": []
+        },
+        "Insecure Randomness": {
+          "expected": 2,
+          "detected": 2,
+          "missed": []
+        },
+        "Weak Cryptography": {
+          "expected": 3,
+          "detected": 3,
+          "missed": []
+        },
+        "Timing Attacks": {
+          "expected": 2,
+          "detected": 2,
+          "missed": []
+        },
+        "SSRF": {
+          "expected": 2,
+          "detected": 2,
+          "missed": []
+        },
+        "Open Redirect": {
+          "expected": 1,
+          "detected": 1,
+          "missed": []
+        },
+        "ReDoS": {
+          "expected": 2,
+          "detected": 2,
+          "missed": []
+        }
+      }
+    },
+    "sonarjs": {
+      "displayName": "eslint-plugin-sonarjs (SonarSource)",
+      "metrics": {
+        "TP": 14,
+        "TN": 33,
+        "FP": 5,
+        "FN": 26,
+        "FNR": "65.0%",
+        "FPR": "13.2%",
+        "precision": "73.7%",
+        "recall": "35.0%",
+        "f1Score": "47.5%",
+        "detectedVulnerabilities": [
+          "vuln_cmd_exec_concat",
+          "vuln_cmd_exec_template",
+          "vuln_cmd_execsync",
+          "vuln_cmd_spawn_shell",
+          "vuln_creds_db_password",
+          "vuln_creds_jwt_secret",
+          "vuln_jwt_alg_none",
+          "vuln_xss_eval",
+          "vuln_xss_new_function",
+          "vuln_random_token",
+          "vuln_random_session",
+          "vuln_crypto_md5",
+          "vuln_crypto_sha1",
+          "vuln_redos_evil"
+        ],
+        "missedVulnerabilities": [
+          "vuln_sql_string_concat",
+          "vuln_sql_template_literal",
+          "vuln_sql_dynamic_column",
+          "vuln_sql_conditional",
+          "vuln_path_join",
+          "vuln_path_concat",
+          "vuln_path_no_validation",
+          "vuln_path_url_pathname",
+          "vuln_creds_api_key",
+          "vuln_creds_aws",
+          "vuln_jwt_no_algorithm",
+          "vuln_jwt_no_expiry",
+          "vuln_xss_innerhtml",
+          "vuln_xss_document_write",
+          "vuln_proto_bracket",
+          "vuln_proto_nested",
+          "vuln_proto_assign",
+          "vuln_crypto_des",
+          "vuln_timing_direct",
+          "vuln_timing_token",
+          "vuln_nosql_mongo",
+          "vuln_nosql_where",
+          "vuln_ssrf_fetch",
+          "vuln_ssrf_axios",
+          "vuln_redirect",
+          "vuln_redos_user"
+        ],
+        "falsePositives": [
+          "safe_cmd_execfile_literal",
+          "safe_cmd_spawn_noshell",
+          "safe_cmd_validated",
+          "safe_random_shuffle",
+          "safe_regex_simple"
+        ]
+      },
+      "categoryBreakdown": {
+        "SQL Injection": {
+          "expected": 6,
+          "detected": 0,
+          "missed": [
+            "vuln_sql_string_concat",
+            "vuln_sql_template_literal",
+            "vuln_sql_dynamic_column",
+            "vuln_sql_conditional",
+            "vuln_nosql_mongo",
+            "vuln_nosql_where"
+          ]
+        },
+        "Command Injection": {
+          "expected": 4,
+          "detected": 4,
+          "missed": []
+        },
+        "Path Traversal": {
+          "expected": 4,
+          "detected": 0,
+          "missed": [
+            "vuln_path_join",
+            "vuln_path_concat",
+            "vuln_path_no_validation",
+            "vuln_path_url_pathname"
+          ]
+        },
+        "Hardcoded Credentials": {
+          "expected": 4,
+          "detected": 2,
+          "missed": [
+            "vuln_creds_api_key",
+            "vuln_creds_aws"
+          ]
+        },
+        "JWT Vulnerabilities": {
+          "expected": 3,
+          "detected": 1,
+          "missed": [
+            "vuln_jwt_no_algorithm",
+            "vuln_jwt_no_expiry"
+          ]
+        },
+        "XSS": {
+          "expected": 4,
+          "detected": 2,
+          "missed": [
+            "vuln_xss_innerhtml",
+            "vuln_xss_document_write"
+          ]
+        },
+        "Prototype Pollution": {
+          "expected": 3,
+          "detected": 0,
+          "missed": [
+            "vuln_proto_bracket",
+            "vuln_proto_nested",
+            "vuln_proto_assign"
+          ]
+        },
+        "Insecure Randomness": {
+          "expected": 2,
+          "detected": 2,
+          "missed": []
+        },
+        "Weak Cryptography": {
+          "expected": 3,
+          "detected": 2,
+          "missed": [
+            "vuln_crypto_des"
+          ]
+        },
+        "Timing Attacks": {
+          "expected": 2,
+          "detected": 0,
+          "missed": [
+            "vuln_timing_direct",
+            "vuln_timing_token"
+          ]
+        },
+        "SSRF": {
+          "expected": 2,
+          "detected": 0,
+          "missed": [
+            "vuln_ssrf_fetch",
+            "vuln_ssrf_axios"
+          ]
+        },
+        "Open Redirect": {
+          "expected": 1,
+          "detected": 0,
+          "missed": [
+            "vuln_redirect"
+          ]
+        },
+        "ReDoS": {
+          "expected": 2,
+          "detected": 1,
+          "missed": [
+            "vuln_redos_user"
+          ]
+        }
+      }
+    }
+  }
+}
